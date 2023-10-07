@@ -35,6 +35,7 @@ function registerUser() {
 
         alert("Registration successful!");
         clearRegistrationForm();
+		container.classList.remove("right-panel-active");
     }
 }
 
