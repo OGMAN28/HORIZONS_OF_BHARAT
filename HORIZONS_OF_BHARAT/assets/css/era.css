@@ -1,0 +1,36 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.space-background {
+    width: 100%;
+    height: 100vh;
+    background-color: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.curved-line {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 50%; /* Adjust thickness as needed */
+    transform: translateY(-50%);
+    fill: transparent;
+    stroke: #0077ff;
+    stroke-width: 5; /* Line thickness */
+    animation: grow 10s ease-in-out infinite alternate;
+}
+
+
+
+@keyframes grow {
+    0% {
+        width: 100%;
+    }
+    100% {
+        width: 200%;
+    }
+}
