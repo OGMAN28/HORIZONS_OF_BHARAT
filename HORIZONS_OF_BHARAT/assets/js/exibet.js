@@ -1,105 +1,321 @@
+const cardsContainer = document.querySelector(".card-carousel");
+const cardsController = document.querySelector(".card-carousel + .card-controller")
 
-var radius = 240;
-var autoRotate = true;
-var rotateSpeed = -60;
-var imgWidth = 120;
-var imgHeight = 170;
+class DraggingEvent {
+  constructor(target = undefined) {
+    this.target = target;
+  }
+  
+  event(callback) {
+    let handler;
+    
+    this.target.addEventListener("mousedown", e => {
+      e.preventDefault()
+      
+      handler = callback(e)
+      
+      window.addEventListener("mousemove", handler)
+      
+      document.addEventListener("mouseleave", clearDraggingEvent)
+      
+      window.addEventListener("mouseup", clearDraggingEvent)
+      
+      function clearDraggingEvent() {
+        window.removeEventListener("mousemove", handler)
+        window.removeEventListener("mouseup", clearDraggingEvent)
+      
+        document.removeEventListener("mouseleave", clearDraggingEvent)
+        
+        handler(null)
+      }
+    })
+    
+    this.target.addEventListener("touchstart", e => {
+      handler = callback(e)
+      
+      window.addEventListener("touchmove", handler)
+      
+      window.addEventListener("touchend", clearDraggingEvent)
+      
+      document.body.addEventListener("mouseleave", clearDraggingEvent)
+      
+      function clearDraggingEvent() {
+        window.removeEventListener("touchmove", handler)
+        window.removeEventListener("touchend", clearDraggingEvent)
+        
+        handler(null)
+      }
+    })
+  }
+  
+  // Get the distance that the user has dragged
+  getDistance(callback) {
+    function distanceInit(e1) {
+      let startingX, startingY;
+      
+      if ("touches" in e1) {
+        startingX = e1.touches[0].clientX
+        startingY = e1.touches[0].clientY
+      } else {
+        startingX = e1.clientX
+        startingY = e1.clientY
+      }
+      
 
-
-
-setTimeout(init, 800);
-
-var odrag = document.getElementById('drag-container');
-var ospin = document.getElementById('spin-container');
-var aImg = ospin.getElementsByTagName('img');
-var aVid = ospin.getElementsByTagName('video');
-var aEle = [...aImg, ...aVid];
-
-// Size of images
-ospin.style.width = imgWidth + "px";
-ospin.style.height = imgHeight + "px";
-
-// Size of ground - depend on radius
-var ground = document.getElementById('ground');
-ground.style.width = radius * 3 + "px";
-ground.style.height = radius * 3 + "px";
-
-function init(delayTime) {
-  for (var i = 0; i < aEle.length; i++) {
-    aEle[i].style.transform = "rotateY(" + (i * (360 / aEle.length)) + "deg) translateZ(" + radius + "px)";
-    aEle[i].style.transition = "transform 0.5s";
-    aEle[i].style.transitionDelay = delayTime || (aEle.length - i) / 4 + "s";
+      return function(e2) {
+        if (e2 === null) {
+          return callback(null)
+        } else {
+          
+          if ("touches" in e2) {
+            return callback({
+              x: e2.touches[0].clientX - startingX,
+              y: e2.touches[0].clientY - startingY
+            })
+          } else {
+            return callback({
+              x: e2.clientX - startingX,
+              y: e2.clientY - startingY
+            })
+          }
+        }
+      }
+    }
+    
+    this.event(distanceInit)
   }
 }
 
-function applyTranform(obj) {
-  // Constrain the angle of camera (between 0 and 180)
-  if(tY > 180) tY = 180;
-  if(tY < 0) tY = 0;
 
-  // Apply the angle
-  obj.style.transform = "rotateX(" + (-tY) + "deg) rotateY(" + (tX) + "deg)";
-}
+class CardCarousel extends DraggingEvent {
+  constructor(container, controller = undefined) {
+    super(container)
+    
+    // DOM elements
+    this.container = container
+    this.controllerElement = controller
+    this.cards = container.querySelectorAll(".card")
+    
+    // Carousel data
+    this.centerIndex = (this.cards.length - 1) / 2;
+    this.cardWidth = this.cards[0].offsetWidth / this.container.offsetWidth * 100
+    this.xScale = {};
+    
+    // Resizing
+    window.addEventListener("resize", this.updateCardWidth.bind(this))
+    
+    if (this.controllerElement) {
+      this.controllerElement.addEventListener("keydown", this.controller.bind(this))      
+    }
 
-function playSpin(yes) {
-  ospin.style.animationPlayState = (yes?'running':'paused');
-}
+    
+    // Initializers
+    this.build()
+    
+    // Bind dragging event
+    super.getDistance(this.moveCards.bind(this))
+  }
+  
+  updateCardWidth() {
+    this.cardWidth = this.cards[0].offsetWidth / this.container.offsetWidth * 100
+    
+    this.build()
+  }
+  
+  build(fix = 0) {
+    for (let i = 0; i < this.cards.length; i++) {
+      const x = i - this.centerIndex;
+      const scale = this.calcScale(x)
+      const scale2 = this.calcScale2(x)
+      const zIndex = -(Math.abs(i - this.centerIndex))
+      
+      const leftPos = this.calcPos(x, scale2)
+     
+      
+      this.xScale[x] = this.cards[i]
+      
+      this.updateCards(this.cards[i], {
+        x: x,
+        scale: scale,
+        leftPos: leftPos,
+        zIndex: zIndex
+      })
+    }
+  }
+  
+  
+  controller(e) {
+    const temp = {...this.xScale};
+      
+      if (e.keyCode === 39) {
+        // Left arrow
+        for (let x in this.xScale) {
+          const newX = (parseInt(x) - 1 < -this.centerIndex) ? this.centerIndex : parseInt(x) - 1;
 
-var sX, sY, nX, nY, desX = 0,
-    desY = 0,
-    tX = 0,
-    tY = 10;
-
-// auto spin
-if (autoRotate) {
-  var animationName = (rotateSpeed > 0 ? 'spin' : 'spinRevert');
-  ospin.style.animation = `${animationName} ${Math.abs(rotateSpeed)}s infinite linear`;
-}
-
-
-
-// setup events
-document.onpointerdown = function (e) {
-  clearInterval(odrag.timer);
-  e = e || window.event;
-  var sX = e.clientX,
-      sY = e.clientY;
-
-  this.onpointermove = function (e) {
-    e = e || window.event;
-    var nX = e.clientX,
-        nY = e.clientY;
-    desX = nX - sX;
-    desY = nY - sY;
-    tX += desX * 0.1;
-    tY += desY * 0.1;
-    applyTranform(odrag);
-    sX = nX;
-    sY = nY;
-  };
-
-  this.onpointerup = function (e) {
-    odrag.timer = setInterval(function () {
-      desX *= 0.95;
-      desY *= 0.95;
-      tX += desX * 0.1;
-      tY += desY * 0.1;
-      applyTranform(odrag);
-      playSpin(false);
-      if (Math.abs(desX) < 0.5 && Math.abs(desY) < 0.5) {
-        clearInterval(odrag.timer);
-        playSpin(true);
+          temp[newX] = this.xScale[x]
+        }
       }
-    }, 17);
-    this.onpointermove = this.onpointerup = null;
-  };
+      
+      if (e.keyCode == 37) {
+        // Right arrow
+        for (let x in this.xScale) {
+          const newX = (parseInt(x) + 1 > this.centerIndex) ? -this.centerIndex : parseInt(x) + 1;
 
-  return false;
-};
+          temp[newX] = this.xScale[x]
+        }
+      }
+      
+      this.xScale = temp;
+      
+      for (let x in temp) {
+        const scale = this.calcScale(x),
+              scale2 = this.calcScale2(x),
+              leftPos = this.calcPos(x, scale2),
+              zIndex = -Math.abs(x)
 
-document.onmousewheel = function(e) {
-  e = e || window.event;
-  var d = e.wheelDelta / 20 || -e.detail;
-  radius += d;
-  init(1);
-};
+        this.updateCards(this.xScale[x], {
+          x: x,
+          scale: scale,
+          leftPos: leftPos,
+          zIndex: zIndex
+        })
+      }
+  }
+  
+  calcPos(x, scale) {
+    let formula;
+    
+    if (x < 0) {
+      formula = (scale * 100 - this.cardWidth) / 2
+      
+      return formula
+
+    } else if (x > 0) {
+      formula = 100 - (scale * 100 + this.cardWidth) / 2
+      
+      return formula
+    } else {
+      formula = 100 - (scale * 100 + this.cardWidth) / 2
+      
+      return formula
+    }
+  }
+  
+  updateCards(card, data) {
+    if (data.x || data.x == 0) {
+      card.setAttribute("data-x", data.x)
+    }
+    
+    if (data.scale || data.scale == 0) {
+      card.style.transform = `scale(${data.scale})`
+
+      if (data.scale == 0) {
+        card.style.opacity = data.scale
+      } else {
+        card.style.opacity = 1;
+      }
+    }
+   
+    if (data.leftPos) {
+      card.style.left = `${data.leftPos}%`        
+    }
+    
+    if (data.zIndex || data.zIndex == 0) {
+      if (data.zIndex == 0) {
+        card.classList.add("highlight")
+      } else {
+        card.classList.remove("highlight")
+      }
+      
+      card.style.zIndex = data.zIndex  
+    }
+  }
+  
+  calcScale2(x) {
+    let formula;
+   
+    if (x <= 0) {
+      formula = 1 - -1 / 5 * x
+      
+      return formula
+    } else if (x > 0) {
+      formula = 1 - 1 / 5 * x
+      
+      return formula
+    }
+  }
+  
+  calcScale(x) {
+    const formula = 1 - 1 / 5 * Math.pow(x, 2)
+    
+    if (formula <= 0) {
+      return 0 
+    } else {
+      return formula      
+    }
+  }
+  
+  checkOrdering(card, x, xDist) {    
+    const original = parseInt(card.dataset.x)
+    const rounded = Math.round(xDist)
+    let newX = x
+    
+    if (x !== x + rounded) {
+      if (x + rounded > original) {
+        if (x + rounded > this.centerIndex) {
+          
+          newX = ((x + rounded - 1) - this.centerIndex) - rounded + -this.centerIndex
+        }
+      } else if (x + rounded < original) {
+        if (x + rounded < -this.centerIndex) {
+          
+          newX = ((x + rounded + 1) + this.centerIndex) - rounded + this.centerIndex
+        }
+      }
+      
+      this.xScale[newX + rounded] = card;
+    }
+    
+    const temp = -Math.abs(newX + rounded)
+    
+    this.updateCards(card, {zIndex: temp})
+
+    return newX;
+  }
+  
+  moveCards(data) {
+    let xDist;
+    
+    if (data != null) {
+      this.container.classList.remove("smooth-return")
+      xDist = data.x / 250;
+    } else {
+
+      
+      this.container.classList.add("smooth-return")
+      xDist = 0;
+
+      for (let x in this.xScale) {
+        this.updateCards(this.xScale[x], {
+          x: x,
+          zIndex: Math.abs(Math.abs(x) - this.centerIndex)
+        })
+      }
+    }
+
+    for (let i = 0; i < this.cards.length; i++) {
+      const x = this.checkOrdering(this.cards[i], parseInt(this.cards[i].dataset.x), xDist),
+            scale = this.calcScale(x + xDist),
+            scale2 = this.calcScale2(x + xDist),
+            leftPos = this.calcPos(x + xDist, scale2)
+      
+      
+      this.updateCards(this.cards[i], {
+        scale: scale,
+        leftPos: leftPos
+      })
+    }
+  }
+}
+
+const carousel = new CardCarousel(cardsContainer)

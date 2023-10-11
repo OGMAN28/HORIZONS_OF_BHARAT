@@ -1,109 +1,146 @@
 * {
-    margin: 0;
-    padding: 0;
-  }
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: system-ui;
   
-  html,
-  body {
-    height: 100%;
-    /* for touch screen */
-    touch-action: none; 
-  }
+}
+
+.visuallyhidden {
+  position: absolute;
+  z-index: -1;
+  right: 0;
+  opacity: 0;
   
-  body {
-    overflow: hidden;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    background: #111;
-    perspective: 1000px;
-    transform-style: preserve-3d;
-  }
+}
+
+#main{
+  background-image:url('../img/exibet/bg.jpg');    
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* background-position: center;  */
+  background-size: cover;
   
-  #drag-container, #spin-container {
-    position: relative;
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    margin: auto;
-    transform-style: preserve-3d;
-    transform: rotateX(-10deg);
-  }
+}
+
+h1 {
+  color: #6185ce;
+  text-align: center;
+  margin-top: 1em;
+  padding-top: 3rem;
+  background-color: black;
+  z-index: 997;
+}
+
+.container {
   
-  #drag-container img{
-    transform-style: preserve-3d;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 110%;
-    height: 110%;
-    line-height: 200px;
-    font-size: 50px;
-    object-fit: cover;
-    object-position: center;
-    text-align: center;
-    background: linear-gradient( #bdc3c7, #2c3e50);
-    padding: 1.5px;
-    border-radius: 25px;
-    -webkit-box-reflect: below 10px linear-gradient(transparent, transparent, #0005);
+  /* overflow: hidden; */
+  /* padding: 20px; */
+  margin-top: 2em;
+  padding: 3rem;
+  z-index: 997;
+}
+
+.card-carousel {
+  --card-width: 80%;
+  --card-max-width: 280px;
+  --card-height: 350px;
+  --carousel-min-width: 600px;
+  z-index: 1;
+  position: relative;
+  margin: 0 auto;
+  width: 100%;
+  height: var(--card-height);
+  min-width: var(--carousel-min-width);
+  transition: filter .3s ease;
+}
+
+@media screen and (max-width: 640px) {
+  .card-carousel {
+    margin-left: calc((100vw - var(--carousel-min-width) - 40px) / 2)
   }
+}
+
+.card-carousel.smooth-return {
+  transition: all .2s ease;
+}
+
+.card-carousel .card {
+  background: whitesmoke;
+  width: var(--card-width);
+  max-width: var(--card-max-width);
+  text-align: center;
+  padding: 1em;
+  min-width: 250px;
+  height: var(--card-height);
+  position: absolute;
+  margin: 0 auto;
+  color: rgba(0,0,0,.5);
+  transition: inherit;
+  -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.3);
+  -moz-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.3);
+  box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.3);
+  border-radius: 1em;
+  filter: brightness(.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card.highlight {
+  filter: brightness(1)
+}
+
+
+.card:nth-of-type(1) .image-container {
+    background-image: url("../img/exibet/rajmudra.jpg");
+}
+ 
+.card:nth-of-type(2) .image-container {
+  background-image: url("../img/exibet/somaskanda.jpg")
+}
+
+.card:nth-of-type(3) .image-container {
+  background-image: url("../img/exibet/charkha.jpg")}
+
+.card:nth-of-type(4) .image-container {
+  background-image: url("../img/exibet/ganesh_mask.jpeg")
+}
+
+.card:nth-of-type(5) .image-container {
+  background-image: url("../img/exibet/natraj.jpg")
+}
+
+
+
+
+.image-container {
+  width: 8em;
+  height: 8em;
+  position: relative;
+  background-size: cover;
+  margin-bottom: 2em;
+  border-radius: 100%;
+  padding: 1em;
+  -webkit-box-shadow: inset 0px 0px 17px 0px rgba(0,0,0,0.3);
+-moz-box-shadow: inset 0px 0px 17px 0px rgba(0,0,0,0.3);
+box-shadow: inset 0px 0px 17px 0px rgba(0,0,0,0.3);
   
-  #drag-container img:hover{
-    box-shadow: 0 0 5px #fffd;
-    -webkit-box-reflect: below 10px linear-gradient(transparent, transparent, #0007);
-    filter: grayscale(1);
-  }
-  
-  #drag-container p {
-    font-family: Serif;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translate(-50%,-50%) rotateX(90deg);
-    color: #fff;
-  }
-  
-  #ground {
-    width: 900px;
-    height: 900px;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translate(-50%,-50%) rotateX(90deg);
-    background: -webkit-radial-gradient(center center, farthest-side , #9993, transparent);
-  }
-  
-  
-  @-webkit-keyframes spin {
-    from{
-      transform: rotateY(0deg);
-    } 
-    to{
-      transform: rotateY(360deg);
-    }
-  }
-  
-  @keyframes spin {
-    from{
-      transform: rotateY(0deg);
-    } 
-    to{
-      transform: rotateY(360deg);
-    }
-  }
-  @-webkit-keyframes spinRevert {
-    from{
-      transform: rotateY(360deg);
-    } 
-    to{
-      transform: rotateY(0deg);
-    }
-  }
-  @keyframes spinRevert {
-    from{
-      transform: rotateY(360deg);
-    }
-    to{
-      transform: rotateY(0deg);
-    }
-  }
+}
+
+.image-container::after {
+  content: "";
+  display: block;
+  width: 120%;
+  height: 120%;
+  border: solid 3px rgba(0,0,0,.1);
+  border-radius: 100%;
+  position: absolute;
+  top: calc(-10% - 3px);
+  left: calc(-10% - 3px);
+}
+
